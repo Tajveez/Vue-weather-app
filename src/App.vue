@@ -5,41 +5,43 @@
       <div class="search-box">
         <input
           type="text"
+          id="search-bar"
           class="search-bar"
-          placeholder="What's on your Mind?"
           v-model="query"
-          @keypress="getWeather"
+          placeholder="What's on your Mind?"
+          @keypress="search"
         />
       </div>
-      <div v-if="errorStr">Please, Turn on your location</div>
-      <div class="weather-wrap" v-else>
+      <div class="weather-wrap">
         <div class="location-box">
           <div class="location">
             <i class="fa fa-map-marker" aria-hidden="true"></i>
-            {{weather.name}}, {{weather.sys.country}}
+            {{ weather.name }}, {{ weather.sys.country }}
           </div>
-          <div class="date">{{getCurrentDate()}}</div>
+          <div class="date">{{ getCurrentDate() }}</div>
           <!-- <div class="date">Monday, 20 July 2020</div> -->
         </div>
         <div class="weather-box">
           <div class="temp-box">
             <div class="temp">
-              {{weather.main.temp}}° C
+              {{ weather.main.temp }}° C
               <hr />
             </div>
             <div class="temp-desc">
               <i class="fas fa-sun"></i>
+              Sunrise
               <!-- <i class="fas fa-sun"></i> -->
-              {{getTime(weather.sys.sunrise)}} |
+              {{ getTime(weather.sys.sunrise) }} |
+              Sunset
               <i class="fas fa-moon"></i>
-              {{getTime(weather.sys.sunset)}}
+              {{ getTime(weather.sys.sunset) }}
             </div>
           </div>
           <div class="weather">
             <!-- <img id="wicon" :src="weatherIcon" alt="Weather icon" /> -->
-            {{weather.weather[0].main}}
+            {{ weather.weather[0].main }}
           </div>
-          <div class="weather-desc">{{weather.weather[0].description}}</div>
+          <div class="weather-desc">{{ weather.weather[0].description }}</div>
         </div>
       </div>
       <!-- <a class="change-background" @click="changeBackground">
@@ -97,6 +99,14 @@ export default {
     }
   },
   methods: {
+    search(e) {
+      if (e.key == "Enter" && this.query !== "") {
+        window.open(
+          "http://www.google.com/search?&q=" + escape(this.query),
+          "_self"
+        );
+      }
+    },
     changeBackground() {
       let url =
         "https://source.unsplash.com/random/1600x900?nature,water,art,space,wild,happy,city,food,history,animal,car";
@@ -134,7 +144,7 @@ export default {
     getTime(_timestamp) {
       let timezoneOffset = this.weather.timezone / 60;
       timezoneOffset = timezoneOffset / 60;
-      console.log(timezoneOffset);
+      // console.log(timezoneOffset);
       let date = new Date(_timestamp * 1000);
       let utcDate = date.getUTCHours();
       let hours = 0;
@@ -143,11 +153,11 @@ export default {
         utcDate = utcDate === 0 ? 24 : utcDate;
         hours = utcDate + timezoneOffset;
         minutes = date.getUTCMinutes();
-        console.log("~" + utcDate + " - " + timezoneOffset);
+        // console.log("~" + utcDate + " - " + timezoneOffset);
       } else {
         hours = utcDate + Math.trunc(timezoneOffset);
         minutes = date.getUTCMinutes() + 30;
-        console.log("~~" + hours);
+        // console.log("~~" + hours);
       }
       // let seconds = date.getSeconds();
 
@@ -166,38 +176,21 @@ export default {
     }
   },
   created() {
-    //do we support geolocation
-    if (!("geolocation" in navigator)) {
-      this.errorStr = "Geolocation is not available.";
-      return;
-    }
-
-    this.gettingLocation = true;
-    // get position
-    navigator.geolocation.getCurrentPosition(
-      pos => {
-        this.gettingLocation = false;
-        this.location = pos;
-      },
-      err => {
-        this.gettingLocation = false;
-        this.errorStr = err.message;
-      }
-    );
-  },
-  mounted() {
     // if (navigator.geolocation) {
     //   let loc = navigator.geolocation.getCurrentPosition();
     //   console.log(loc);
     // }
-    this.query = "Rawalpindi";
+    let location = "Rawalpindi";
     fetch(
-      `${this.url_base}weather?q=${this.query}&units=metric&APPID=${this.api_key}`
+      `${this.url_base}weather?q=${location}&units=metric&APPID=${this.api_key}`
     )
       .then(res => {
         return res.json();
       })
       .then(this.setWeather);
+  },
+  loadAfter() {
+    document.getElementById("search-bar").focus();
   }
 };
 </script>
