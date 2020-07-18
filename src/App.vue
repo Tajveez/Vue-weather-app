@@ -1,6 +1,7 @@
 <template>
   <div id="app">
     <main>
+      <div class="welcome-heading">Welcome, User</div>
       <div class="search-box">
         <input
           type="text"
@@ -103,7 +104,7 @@ export default {
       app.style.backgroundImage = `url('${url}')`;
     },
     getCurrentDate() {
-      let today = new Date();
+      let today = new Date(this.weather.dt * 1000);
 
       let date =
         this.dayName[today.getDay() - 1] +
@@ -215,6 +216,14 @@ body {
   background-size: cover;
   background-position: bottom;
   transition: 0.4s;
+}
+.welcome-heading {
+  color: #fff;
+  font-size: 32px;
+  font-weight: 300;
+  text-align: center;
+  text-shadow: 1px 3px rgba(0, 0, 0, 0.25);
+  margin-bottom: 15px;
 }
 main {
   min-height: 100vh;
