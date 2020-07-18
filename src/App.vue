@@ -29,10 +29,7 @@
             </div>
             <div class="temp-desc">
               <i class="fas fa-sun"></i>
-              Sunrise
-              <!-- <i class="fas fa-sun"></i> -->
               {{ getTime(weather.sys.sunrise) }} |
-              Sunset
               <i class="fas fa-moon"></i>
               {{ getTime(weather.sys.sunset) }}
             </div>
