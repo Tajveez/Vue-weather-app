@@ -1,7 +1,7 @@
 <template>
   <div id="app">
-    <main>
-      <div class="welcome-heading">Welcome, User</div>
+    <main v-if="username && location">
+      <div class="welcome-heading">Welcome, {{username}}</div>
       <div class="search-box">
         <input
           type="text"
@@ -12,8 +12,8 @@
           @keypress="search"
         />
       </div>
-      <div class="weather-wrap">
-        <div class="location-box">
+      <div class="weather-wrap" v-if="weather">
+        <div class="location-box" v-if="weather.sys.country !== 'undefined'">
           <div class="location">
             <i class="fa fa-map-marker" aria-hidden="true"></i>
             {{ weather.name }}, {{ weather.sys.country }}
@@ -41,9 +41,40 @@
           <div class="weather-desc">{{ weather.weather[0].description }}</div>
         </div>
       </div>
-      <!-- <a class="change-background" @click="changeBackground">
-        <i class="fas fa-reload"></i>
-      </a>-->
+      <div class="settings">
+        <a @click="setSetting">
+          <i class="fas fa-cog"></i> Setting
+        </a> |
+        <a @click="fillCoffee">
+          <i class="fas fa-coffee"></i> Support the developer
+        </a>
+      </div>
+    </main>
+    <main v-else>
+      <div class="search-box">
+        <div class="welcome-heading">
+          Welcome
+          <p style="font-size: 24px">Please, enter details to continue</p>
+        </div>
+        <input
+          id="username"
+          class="search-bar"
+          type="text"
+          name="username"
+          :value="setting.username"
+          placeholder="Enter your Name"
+        />
+        <br />
+        <input
+          id="location"
+          class="search-bar"
+          type="text"
+          name="location"
+          :value="setting.location"
+          placeholder="Enter your Location (i.e. city name)"
+        />
+        <button @click="saveValues">Save</button>
+      </div>
     </main>
   </div>
 </template>
@@ -56,7 +87,14 @@ export default {
       api_key: "6b53442b5b896092cedb03a4b53e38a7",
       url_base: "https://api.openweathermap.org/data/2.5/",
       query: "",
+      username: "",
+      location: "",
       weather: {},
+      apiError: false,
+      setting: {
+        username: "",
+        location: ""
+      },
       monthName: [
         "January",
         "February",
@@ -72,15 +110,15 @@ export default {
         "December"
       ],
       dayName: [
+        "Sunday",
         "Monday",
         "Tuesday",
         "Wednesday",
         "Thursday",
         "Friday",
-        "Saturday",
-        "Sunday"
+        "Saturday"
       ],
-      location: null,
+
       gettingLocation: false,
       errorStr: null
     };
@@ -96,6 +134,12 @@ export default {
     }
   },
   methods: {
+    setLocalStorage() {
+      if (this.username !== "" && this.location !== "") {
+        localStorage.setItem("username", this.username);
+        localStorage.setItem("location", this.location);
+      }
+    },
     search(e) {
       if (e.key == "Enter" && this.query !== "") {
         window.open(
@@ -104,17 +148,46 @@ export default {
         );
       }
     },
-    changeBackground() {
-      let url =
-        "https://source.unsplash.com/random/1600x900?nature,water,art,space,wild,happy,city,food,history,animal,car";
-      let app = document.getElementById("app");
-      app.style.backgroundImage = `url('${url}')`;
+    fillCoffee() {
+      window.open("https://www.patreon.com/tajveez");
+    },
+    saveValues() {
+      let username = document.querySelector("input[name=username]").value;
+      let location = document.querySelector("input[name=location]").value;
+      if (username === "" || location === "") {
+        alert("Please, fill the values");
+      } else {
+        // console.log(username + " - " + location);
+        this.getWeather(location).then(data => {
+          if (data.cod != "404") {
+            this.setWeather(data);
+            this.username = username;
+            this.location = location;
+            this.setLocalStorage();
+          } else {
+            alert("Your entered location is invalid, please, try again.");
+          }
+        });
+      }
+    },
+    setSetting() {
+      let username = this.username;
+      let location = this.location;
+
+      this.username = "";
+      this.location = "";
+      this.setting.username = username;
+      this.setting.location = location;
+
+      // let url =
+      //   "https://source.unsplash.com/random/1600x900?nature,water,art,space,wild,happy,city,food,history,animal,car";
+      // let app = document.getElementById("app");
+      // app.style.backgroundImage = `url('${url}')`;
     },
     getCurrentDate() {
       let today = new Date(this.weather.dt * 1000);
-
       let date =
-        this.dayName[today.getDay() - 1] +
+        this.dayName[today.getDay()] +
         ", " +
         today.getDate() +
         " " +
@@ -124,15 +197,13 @@ export default {
 
       return date;
     },
-    getWeather(e) {
-      if (e.key == "Enter") {
-        fetch(
-          `${this.url_base}weather?q=${this.query}&units=metric&APPID=${this.api_key}`
-        )
-          .then(res => {
-            return res.json();
-          })
-          .then(this.setWeather);
+    async getWeather(loc) {
+      if (loc !== "") {
+        let response = await fetch(
+          `${this.url_base}weather?q=${loc}&units=metric&APPID=${this.api_key}`
+        );
+        let data = await response.json();
+        return data;
       }
     },
     setWeather(res) {
@@ -141,16 +212,27 @@ export default {
     getTime(_timestamp) {
       let timezoneOffset = this.weather.timezone / 60;
       timezoneOffset = timezoneOffset / 60;
-      // console.log(timezoneOffset);
+
       let date = new Date(_timestamp * 1000);
       let utcDate = date.getUTCHours();
       let hours = 0;
       let minutes = 0;
       if (timezoneOffset % 1 === 0) {
-        utcDate = utcDate === 0 ? 24 : utcDate;
-        hours = utcDate + timezoneOffset;
-        minutes = date.getUTCMinutes();
         // console.log("~" + utcDate + " - " + timezoneOffset);
+        utcDate = utcDate === 0 ? 24 : utcDate;
+
+        if (timezoneOffset > 0) {
+          hours = utcDate + timezoneOffset;
+        } else {
+          hours = utcDate + timezoneOffset;
+          hours = hours < 0 ? 24 + hours : hours;
+          // hours =
+          //   utcDate < Math.abs(timezoneOffset)
+          //     ? Math.abs(timezoneOffset)
+          //     : utcDate + timezoneOffset;
+        }
+
+        minutes = date.getUTCMinutes();
       } else {
         hours = utcDate + Math.trunc(timezoneOffset);
         minutes = date.getUTCMinutes() + 30;
@@ -161,11 +243,12 @@ export default {
       let ampm = hours >= 12 ? " PM" : " AM";
       hours = hours % 12;
       hours = hours ? hours : 12;
-      minutes = minutes < 10 ? "0" + minutes : minutes;
       if (minutes >= 60) {
         minutes -= 60;
         hours += 1;
       }
+      minutes = minutes < 10 ? "0" + minutes : minutes;
+      // console.log(hours + "~" + minutes);
       // seconds = seconds < 10 ? "0" + seconds : seconds;
       var strTime = hours + ":" + minutes + ampm;
 
@@ -177,14 +260,27 @@ export default {
     //   let loc = navigator.geolocation.getCurrentPosition();
     //   console.log(loc);
     // }
-    let location = "Rawalpindi";
-    fetch(
-      `${this.url_base}weather?q=${location}&units=metric&APPID=${this.api_key}`
-    )
-      .then(res => {
-        return res.json();
-      })
-      .then(this.setWeather);
+    let username = localStorage.getItem("username");
+    let location = localStorage.getItem("location");
+
+    if (
+      username !== "null" &&
+      username !== "" &&
+      location !== "null" &&
+      location !== ""
+    ) {
+      this.username = username;
+      this.location = location;
+      // let location = this.location;
+      this.getWeather(location).then(data => {
+        if (data.cod != "404") {
+          this.setWeather(data);
+        }
+      });
+    } else {
+      this.username = "";
+      this.location = "";
+    }
   },
   loadAfter() {
     document.getElementById("search-bar").focus();
@@ -200,6 +296,21 @@ export default {
 }
 body {
   font-family: "montserrat", sans-serif;
+}
+button {
+  margin-top: 20px;
+  font-size: 28px;
+  font-weight: 700;
+  color: rgba(0, 0, 0, 0.55);
+  border-radius: 0px 15px;
+  padding: 10px;
+  border: none;
+  background: rgba(255, 255, 255, 0.65);
+  transition: 0.5s;
+  float: right;
+}
+button:hover {
+  border-radius: 15px 0px;
 }
 #app {
   background-image: url("https://source.unsplash.com/random/1600x900?nature,water,art,space,wild,happy,city,food,history,animal,car");
@@ -301,7 +412,8 @@ main {
   font-style: italic;
   text-shadow: 3px 6px rgba(0, 0, 0, 0.25);
 }
-.change-background {
+.settings {
+  margin-right: 5px;
   position: fixed;
   bottom: 0;
   right: 0;
