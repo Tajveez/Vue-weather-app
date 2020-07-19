@@ -28,6 +28,7 @@
               <hr />
             </div>
             <div class="temp-desc">
+              <div style="font-size:12px">sunrise / sunset</div>
               <i class="fas fa-sun"></i>
               {{ getTime(weather.sys.sunrise) }} |
               <i class="fas fa-moon"></i>
