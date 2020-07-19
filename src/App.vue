@@ -29,9 +29,9 @@
             </div>
             <div class="temp-desc">
               <div style="font-size:12px">sunrise / sunset</div>
-              <i class="fas fa-sun"></i>
+              <i class="fa fa-sun-o"></i>
               {{ getTime(weather.sys.sunrise) }} |
-              <i class="fas fa-moon"></i>
+              <i class="fa fa-moon-o"></i>
               {{ getTime(weather.sys.sunset) }}
             </div>
           </div>
@@ -44,10 +44,13 @@
       </div>
       <div class="settings">
         <a @click="setSetting">
-          <i class="fas fa-cog"></i> Setting
+          <i class="fa fa-cog"></i> Setting
         </a> |
         <a @click="fillCoffee">
-          <i class="fas fa-coffee"></i> Support the developer
+          <i class="fa fa-coffee"></i> Support the developer
+        </a> |
+        <a @click="getContact">
+          <i class="fa fa-github" aria-hidden="true"></i> contact
         </a>
       </div>
     </main>
@@ -151,6 +154,9 @@ export default {
     },
     fillCoffee() {
       window.open("https://www.patreon.com/tajveez");
+    },
+    getContact() {
+      window.open("https://github.com/tajveez");
     },
     saveValues() {
       let username = document.querySelector("input[name=username]").value;
@@ -290,6 +296,7 @@ export default {
 </script>
 
 <style>
+@import "./assets/font-awesome/css/font-awesome.min.css";
 * {
   padding: 0;
   margin: 0;
